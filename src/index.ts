@@ -2,7 +2,7 @@ import express from 'express'
 import route from './routes/puppeeter.route'
 
 const app = express()
-const PORT = 3003
+const PORT = 8080
 
 app.use(express.json())
 app.use(route)

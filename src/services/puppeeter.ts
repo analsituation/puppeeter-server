@@ -1,16 +1,60 @@
-import puppeteer from 'puppeteer'
-import fs from 'fs'
-import { generateSHA1, uploadToVercel } from '../saveToBlob'
+import puppeteer, { Browser, Page } from 'puppeteer'
 
 export class PuppeteerService {
-  async generatePdfAndScreenshot(url: string) {
-    const browser = await puppeteer.launch({ headless: true })
+  async setupBrowserPage() {
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      headless: true
+    })
     const page = await browser.newPage()
 
+    return { browser, page }
+  }
+
+  async createPdfAndScreenshot(
+    url: string,
+    page: Page,
+    dimensions: {
+      width: number
+      height: number
+    },
+    browser: Browser
+  ) {
     try {
       await page.goto(url)
 
-      // await page.setViewport({ width: 1280, height: 3000 });
+      const pdfBuffer = await page.pdf({
+        height: `${dimensions.height}px`,
+        width: `${dimensions.width}px`,
+        printBackground: true
+      })
+
+      const pdfBase64 = pdfBuffer.toString('base64')
+
+      const screenshotBuffer = await page.screenshot({
+        clip: {
+          x: 0,
+          y: 0,
+          width: dimensions.width,
+          height: dimensions.height
+        }
+      })
+
+      const screenshotBase64 = screenshotBuffer.toString('base64')
+
+      return { pdfBase64, screenshotBase64 }
+    } finally {
+      await browser.close()
+    }
+  }
+
+  // We are targeting the main tag with the container class, so different methods are required for health-check and resume screenshot.
+  async generatePdfAndScreenshot(url: string) {
+    const { browser, page } = await this.setupBrowserPage()
+
+    await page.goto(url)
+
+    try {
       await page.setViewport({ width: 1024, height: 3000 })
 
       await page.evaluate(() => {
@@ -33,39 +77,27 @@ export class PuppeteerService {
             height: Number(mainElement.offsetHeight)
           }
         } else {
-          return { width: 0, height: 0 }
+          return { width: 1024, height: 3000 }
         }
       })
 
-      console.log(dimensions)
-
-      const pdfBuffer = await page.pdf({
-        height: `${dimensions.height}px`,
-        width: `${dimensions.width}px`,
-        printBackground: true
-      })
-
-      // fs.writeFileSync('./resume.pdf', pdf)
-
-      const pdfBase64 = pdfBuffer.toString('base64')
-
-      const screenshotBuffer: Buffer = await page.screenshot({
-        clip: {
-          x: 0,
-          y: 0,
-          width: dimensions.width,
-          height: dimensions.height
-        }
-      })
-
-      // fs.writeFileSync('./resume.png', screenshotBuffer)
-      const screenshotBase64 = screenshotBuffer.toString('base64')
-
-      await browser.close()
-
-      return { pdfBase64, screenshotBase64 }
+      return await this.createPdfAndScreenshot(url, page, dimensions, browser)
     } catch (error) {
       console.error('An error occurred:', error)
+    } finally {
+      await browser.close()
+    }
+  }
+
+  async healthCheck(url: string) {
+    const { browser, page } = await this.setupBrowserPage()
+
+    try {
+      const dimensions = { width: 1024, height: 3000 }
+
+      return await this.createPdfAndScreenshot(url, page, dimensions, browser)
+    } catch (error) {
+      console.error('An error occurred during health check:', error)
     } finally {
       await browser.close()
     }

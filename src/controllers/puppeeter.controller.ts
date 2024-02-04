@@ -19,4 +19,18 @@ export class PuppeteerController {
       res.status(500).json({ error: 'An error occurred while generating PDF and screenshot' })
     }
   }
+
+  async healthCheck(req: Request, res: Response): Promise<void> {
+    const url = 'https://github.com/analsituation'
+    try {
+      const resumes = await this.puppeteerService.healthCheck(url)
+      if (resumes) {
+        res.status(200).send({ health: 'ok' })
+      } else {
+        throw new Error()
+      }
+    } catch (error) {
+      res.status(500).send({ health: 'off' })
+    }
+  }
 }

@@ -1,0 +1,8 @@
+/node_modules
+
+/dist
+
+.env
+
+resume.pdf
+resume.png

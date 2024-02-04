@@ -1,0 +1,34 @@
+# fly.toml app configuration file generated for fly-and-poop on 2024-02-04T05:24:32+05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'fly-and-poop'
+primary_region = 'sjc'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[checks]
+  [checks.make_screen]
+    port = 8080
+    type = 'http'
+    interval = '20s'
+    timeout = '15s'
+    grace_period = '10s'
+    method = 'get'
+    path = '/health-basic'
+    protocol = 'http'
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 1024
