@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for fly-and-poop on 2024-02-04T05:24:32+05:00
+# fly.toml app configuration file generated for puppeeter-service on 2024-02-08T04:56:33+05:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'fly-and-poop'
+app = 'puppeeter-service'
 primary_region = 'sjc'
 
 [build]
